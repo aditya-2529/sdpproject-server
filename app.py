@@ -142,6 +142,8 @@ def predict():
         return jsonify({'error': 'No file provided'}), 400
 
     file = request.files['file']
+    d = request.form['imageName']
+    id = request.form['id']
     if file.filename == '':
         return jsonify({'error': 'Empty file name'}), 400
 
@@ -149,16 +151,21 @@ def predict():
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
+        
+        mongo.db.users.update_one({"_id":ObjectId(id)},{"$push": {"img":d}})
 
         face_input = detect_and_prepare_face(filepath)
         if face_input is None:
+            os.remove(filepath)
             return jsonify({'error': 'No face detected'}), 200  # Send 200 so JS still receives it
 
         prediction = model.predict(face_input)
         predicted_class = int(np.argmax(prediction))
+        os.remove(filepath)
+
         return jsonify({'emotion': predicted_class})
     
     return jsonify({'error': 'Invalid file type'}), 400
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(debug=True,host='0.0.0.0', port=5000)
