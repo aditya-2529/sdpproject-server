@@ -76,7 +76,6 @@ def register():
         "name": data.get("name", ""),
         "email": data["email"],
         "password": hashed_password,
-        "img":"",
         "created_at": datetime.utcnow()
     }
     
